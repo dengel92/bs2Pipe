@@ -1,0 +1,94 @@
+#!/bin/bash -l
+
+#$ -S /bin/bash
+#$ -j y
+#$ -P wax-dk
+#$ -m be
+#$ -M dengel@bu.edu
+#$ -e ./logs/
+#$ -o ./logs/
+#$ -pe omp 8
+#$ -l mem_per_core=8G
+#$ -l h_rt=240:00:00
+
+# Function to perform backup of dozer_par.log
+perform_backup() {
+    logfile="bigscale2_DEv3.log"
+    backupfile="$logfile.bk"
+
+    if [ -e "$logfile" ]; then
+        if [ -e "$backupfile" ]; then
+            num=$(ls -l "$logfile".bk* 2>/dev/null | wc -l)
+            num=$((num + 1))
+            newbackup="$logfile.bk$num"
+        else
+            newbackup="$backupfile"
+        fi
+        mv "$logfile" "$newbackup"
+    fi
+}
+
+# Backup the current dozer_par.log (if exists) before running the job
+perform_backup
+
+echo "=============================================="
+echo "Starting on       : $(date)"
+echo "Running on Node   : $(hostname)"
+echo "Current job ID    : $JOB_ID"
+echo "Current job name  : $JOB_NAME"
+echo "Task index number : $TASK_ID"
+echo "==============================================="
+
+
+
+module load R/4.4.0
+
+p1=$1
+p2=$2
+p3=$3
+p4=$4
+p5=$5
+p6=$6
+run=$7
+out="/projectnb/wax-dk/david/BS2_$(date +'%m-%d-%Y')"
+
+echo "$out" >> ~/Bigscale_pipe/output_paths.txt
+
+mkdir -p "$out"
+
+if [ $? -eq 0 ]; then
+  echo "Folder '$out' created successfully."
+
+# Copy config.tsv to the newly created folder
+  cp ./config.tsv "$out/"
+  
+  # Check if the copy was successful
+  if [ $? -eq 0 ]; then
+    echo "config.tsv copied to '$out' successfully."
+  else
+    echo "Failed to copy config.tsv to '$out'."
+    exit 1  # Exit if copying failed
+  fi
+elif [ -d "$out" ]; then
+  echo "Directory '$out' already exists."
+# Copy config.tsv to the existing folder
+  cp ./config.tsv "$out/"
+
+  # Check if the copy was successful
+  if [ $? -eq 0]; then
+    echo "config.tsv copied '$out' successfully."
+  else
+    echo "Failed to copy config.tsv to '$out'."
+    exit 1
+  fi
+else
+  echo "Failed to create folder '$out'."
+  exit 1  # Terminate the script with an error code
+fi
+
+Rscript bs2Pipe.R $p1 $p2 $p3 $p4 $p5 $p6 $out $run
+
+# Wait for both background processes to complete
+
+
+

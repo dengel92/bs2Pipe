@@ -1,0 +1,9 @@
+quant.p	opt	dattype	seed	samp.id	path
+99.9	3	raw	true	G193M1	/projectnb2/wax-dk/max/SCexp/G190193_7samples/output/module_2_outputs/postaggregation_norm/with-mono_matrix_with-mono_cellbarcodes/rds/module2_aggregated_seurat.rds
+99.9	3	norm	true	G193M1	/projectnb2/wax-dk/max/SCexp/G190193_7samples/output/module_2_outputs/postaggregation_norm/with-mono_matrix_with-mono_cellbarcodes/rds/module2_aggregated_seurat.rds
+99.9	3	norm	true	G193M3	/projectnb2/wax-dk/max/SCexp/G190193_7samples/output/module_2_outputs/postaggregation_norm/with-mono_matrix_with-mono_cellbarcodes/rds/module2_aggregated_seurat.rds
+99.9	3	raw	true	G193M3	/projectnb2/wax-dk/max/SCexp/G190193_7samples/output/module_2_outputs/postaggregation_norm/with-mono_matrix_with-mono_cellbarcodes/rds/module2_aggregated_seurat.rds
+99.9	3	norm	true	G190M2	/projectnb2/wax-dk/max/SCexp/G190193_7samples/output/module_2_outputs/postaggregation_norm/with-mono_matrix_with-mono_cellbarcodes/rds/module2_aggregated_seurat.rds
+99.9	3	raw	true	G190M2	/projectnb2/wax-dk/max/SCexp/G190193_7samples/output/module_2_outputs/postaggregation_norm/with-mono_matrix_with-mono_cellbarcodes/rds/module2_aggregated_seurat.rds
+99.9	3	norm	true	G190M3	/projectnb2/wax-dk/max/SCexp/G190193_7samples/output/module_2_outputs/postaggregation_norm/with-mono_matrix_with-mono_cellbarcodes/rds/module2_aggregated_seurat.rds
+99.9	3	raw	true	G190M3	/projectnb2/wax-dk/max/SCexp/G190193_7samples/output/module_2_outputs/postaggregation_norm/with-mono_matrix_with-mono_cellbarcodes/rds/module2_aggregated_seurat.rds
