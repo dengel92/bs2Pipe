@@ -15,8 +15,11 @@ if (length(unique(output_paths)) > 1) {
 common_path <- unique(output_paths)[1]
 cat("All paths are consistent. Proceeding with path:", common_path, "\n")
 
-# Your centrality aggregation logic here
+# Centrality aggregation logic here
 
 print(paste("Processing data in:", common_path))
 suffixes <- rdsfilename_to_suffix(common_path)
 aggrcent <- CentAggr(pth = common_path, suffixes = suffixes, centralities = c("Degree", "Betweenness", "Closeness", "PAGErank"))
+
+### Save Aggregated Centrality Data
+openxlsx::write.xlsx(aggrcent, paste0(common_path,"/aggrecent",,"_",format(Sys.time(), "%Y_%d_%m_%H_%M_%S"),".xlsx")
