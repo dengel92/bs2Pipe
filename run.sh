@@ -3,6 +3,7 @@
 #$ -o ./logs/
 
 module load R/4.4.0
+set -eux
 
 while IFS=$'\t' read -r v1 v2 v3 v4 v5 v6; do
 
@@ -24,25 +25,27 @@ while IFS=$'\t' read -r v1 v2 v3 v4 v5 v6; do
     if [[ "$v3" == "raw" ]]; then
         for i in {1..5}; do
             echo "Submitting qsub for Raw data (run $i): v1=$v1, v2=$v2, v3=$v3, v4=$v4 v5=${v5//,/} v6=$v6"
-            qsub -N "bigscale2_DEV3_${v1}_${v2}_${v3}_${v5//,/}_run${i}_$(date +%m-%d-%y_%I-%M-%S%p)" bigScale2.qsub $v1 $v2 $v3 $v4 $v5 $v6 $i
+            qsub -N "bigscale2_DEV3_${v1}_${v2}_${v3}_${v5//,/}_run${i}_$(date +%m-%d-%y_%I-%M-%S%p)" bigscale2_DEVer4.qsub $v1 $v2 $v3 $v4 $v5 $v6 $i
         done
     else
         echo "Submitting qsub for Norm data: v1=$v1, v2=$v2, v3=$v3, v4=$v4 v5=${v5//,/} v6=$v6"
-        qsub -N "bigscale2_DEV3_${v1}_${v2}_${v3}_${v5//,/}_$(date +%m-%d-%y_%I-%M-%S%p)" bigScale2.qsub $v1 $v2 $v3 $v4 $v5 $v6
+        qsub -N "bigscale2_DEV3_${v1}_${v2}_${v3}_${v5//,/}_$(date +%m-%d-%y_%I-%M-%S%p)" bigscale2_DEVer4.qsub $v1 $v2 $v3 $v4 $v5 $v6
     fi
 
 done <config.tsv
+
+#sleep 10
 
 # Wait for all jobs to complete
 echo "Waiting for jobs to complete..."
 while [[ $(qstat -u dengel | grep -c "bigscale2_") -gt 0 ]]; do
     echo "Jobs still in the queue. Sleeping for 60 seconds..."
-    qstat  # Log the output of qstat to see the current job list
-    sleep 60  # Check every 60 seconds
+    qstat -u dengel  # Log the output of qstat to see the current job list
+    sleep 1200  # Check every 60 seconds
 done
 echo "All jobs completed."
 
 output="~/Bigscale_pipe/output_paths.txt"
 
 
-Rscript AggregateCentrality.R $output
+Rscript ~/Bigscale_pipe/AggregateCentrality.R $output
