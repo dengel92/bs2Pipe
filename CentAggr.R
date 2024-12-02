@@ -7,17 +7,18 @@ rdsfilename_to_suffix <- function(pth) {
   suffixes <- sapply(files, function(file) {
     # Extract the filename (without path)
     filename <- basename(file)
-    print(filename)
+    # print(filename)
     # Use str_extract to capture the G190Mx and Run.X parts
     g190m <- str_extract(filename, "G\\d+M\\d+")  # Extract G190M and the number
-    print(length(g190m))
+    # print(length(g190m))
     # Check if the filename contains "norm" or "raw"
     data_type <- ifelse(str_detect(filename, "norm"), "norm", 
                         ifelse(str_detect(filename, "raw"), "raw", "unknown"))
-    print(paste0("data_type length is ", length(data_type)))
+    # print(paste0("data_type length is ", length(data_type)))
     print(paste0("Data Type: ", data_type))
+    
     run_num <- str_extract(filename, "Run\\.\\d+")  # Extract "Run.X" (including "Run")
-    print(length(run_num))
+    # print(length(run_num))
     print(paste0("Run #: ", run_num))
     
     if (!is.na(g190m) && !is.na(run_num)) { #
@@ -28,8 +29,8 @@ rdsfilename_to_suffix <- function(pth) {
   })
   
   # Remove any NAs (if any filenames did not match)
-  print(length(suffixes))
-  print(suffixes)
+  # print(length(suffixes))
+  # print(suffixes)
   suffixes <- suffixes[!is.na(suffixes)]
   
   return(suffixes)
