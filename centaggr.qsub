@@ -1,0 +1,18 @@
+#!/bin/bash -l
+#$ -j y
+#$ -P wax-dk
+#$ -m be
+#$ -M dengel@bu.edu
+#$ -e ./logs/
+#$ -o ./logs/
+#$ -pe omp 8
+#$ -l mem_per_core=8G
+#$ -l h_rt=10:00:00
+
+set -eux
+
+module load R/4.4.0
+
+output="~/Bigscale_pipe/output_paths.txt"
+
+Rscript AggregateCentrality.R $output

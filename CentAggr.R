@@ -74,11 +74,13 @@ CentAggr <- function(pth, suffixes = NULL, centralities = NULL) {
   # Get the list of objects in the global environment
   all_objects <- ls(.GlobalEnv)[sapply(mget(ls(.GlobalEnv), .GlobalEnv), is.list)]
   
-  print(all_objects)
+  #print(all_objects)
   # Exclude the function parameters (suffixes and centralities) from the list of objects
   excluded_objects <- c("suffixes", "centralities")
   
   data_sources <- mget(all_objects, mode = "list", envir = .GlobalEnv)
+  
+  #str(data_sources)
   
   # Use mapply to iterate over both data sources and topgenes
   dataframes <- mapply(function(data) {
@@ -86,7 +88,9 @@ CentAggr <- function(pth, suffixes = NULL, centralities = NULL) {
       rownames_to_column("ids")
   }, data_sources, SIMPLIFY = FALSE)
   
-  print(head(dataframes))
+  #str(dataframes)
+  
+  #print(head(dataframes))
   # Apply the function to each data frame
   dataframes_with_indicators <- mapply(function(df, suffix) {
     add_top100_indicators(df, centralities, suffix)
