@@ -1,6 +1,11 @@
 # Get command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
 
+if (length(args) == 0) {
+  stop("Error: 'args' cannot be empty. Please provide valid arguments.")
+}
+
+
 set_seed <- as.logical(args[4])  # Boolean value to decide if the seed should be set
 
 if (set_seed) {
@@ -48,13 +53,27 @@ dattype <- args[3]
 samp.id <- unlist(str_split(args[5], ","))
 pth <- args[6]
 out_dir <- args[7]
-run <- paste0("Run.", as.numeric(args[8]))
+
+if (length(args) < 8 || is.na(args[8]) || is.na(as.numeric(args[8]))) {
+  run <- "Run.Norm"
+} else {
+  run <- paste0("Run.", as.numeric(args[8]))
+}
+
+if (args[length(args)] %in% c("normal", "fast")) {
+  speed <- args[length(args)]
+} else {
+  speed <- "slow"
+}
+
 
 print(out_dir)
 print(sprintf('quantile.p: %g',quantile.p)) ###
 print(sprintf('opt: %g',opt))
 print(sprintf('dattype: %s',dattype))
 print(sprintf('Sample ID: %s',samp.id))
+print(sprintf('Speed: %s',speed))
+
 str(samp.id)
 
 dat.seurat <- readRDS(pth)
@@ -71,55 +90,99 @@ dat.seurat <- readRDS(pth)
 # Your code or random operations can follow here
 
 
-if (dattype == "norm"){
+if (dattype == "norm") {
   
-  Idents(dat.seurat) <- dat.seurat$batch
-  k2 <- WhichCells(object = dat.seurat , idents = c(samp.id))
-  dat.seurat.filt <- dat.seurat[,k2]
-  Idents(dat.seurat.filt) <- dat.seurat.filt$batch
-  samp <- as.SingleCellExperiment(dat.seurat.filt, assay = "SCT")
-  #ctrlf2norm <- G190_MF_sce2[, G190_MF_sce2$sample_id == "G190M2"]
-  #cghmnorm <- G190_MF_sce2[, G190_MF_sce2$sample_id == "G190M3"]
-  #ctrlmnorm <- G190_MF_sce2[, G190_MF_sce2$sample_id == "G193M1"]
-  #ctrlfnorm <- G190_MF_sce2[, G190_MF_sce2$sample_id == "G193M3"]
-  #samp <- G190_MF_sce2[, G190_MF_sce2$sample_id == samp.id]
-  ## obtain all gene names and store in vector
-  genes <-  samp@rowRanges@partitioning@NAMES
+  if (length(samp.id)>1) {
+    Idents(dat.seurat) <- dat.seurat$batch
+    k2 <- WhichCells(object = dat.seurat , idents = c(samp.id))
+    dat.seurat.filt <- dat.seurat[,k2]
+    Idents(dat.seurat.filt) <- dat.seurat.filt$batch
+    
+    rsamp <- map(samp.id, function(ids){
+      filt <- length(SingleCellExperiment::counts(as.SingleCellExperiment(dat.seurat.filt[, WhichCells(object = dat.seurat , idents = ids)], 
+                                                                          assay = "SCT"))@Dimnames[[2]])
+      #print(filt) # For troubleshooting purposes only
+      
+      sce <- SingleCellExperiment::counts(as.SingleCellExperiment(dat.seurat.filt[, WhichCells(object = dat.seurat , idents = ids)], assay = "SCT"))[, sample(1:filt, 3500)]
+    }) %>% reduce(cbind)
+    
+    ## obtain all gene names and store in vector
+    genes <-  rsamp@Dimnames[[1]]
+    
+    ## create lncRNA specific vector
+    lncs <- genes[grep("lnc", genes)]
+    
+    ## check that lncRNAs are in lncs vector
+    print(head(lncs))
+    
+    
+    network1 <- compute.network.sparse(expr.data = rsamp, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed)
+  } else {
+    Idents(dat.seurat) <- dat.seurat$batch
+    k2 <- WhichCells(object = dat.seurat , idents = c(samp.id))
+    dat.seurat.filt <- dat.seurat[,k2]
+    Idents(dat.seurat.filt) <- dat.seurat.filt$batch
+    samp <- as.SingleCellExperiment(dat.seurat.filt, assay = "SCT")
+    
+    ## obtain all gene names and store in vector
+    genes <-  samp@rowRanges@partitioning@NAMES
+    
+    ## create lncRNA specific vector
+    lncs <- genes[grep("lnc", genes)]
+    
+    ## check that lncRNAs are in lncs vector
+    print(head(lncs))
+    
+    network1 <- compute.network.sparse(expr.data = samp@assays@data$counts, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed)
+  }
   
-  ## create lncRNA specific vector
-  lncs <- genes[grep("lnc", genes)]
-  
-  ## check that lncRNAs are in lncs vector
-  print(head(lncs))
-  
-  
-  network1 <- compute.network.sparse(expr.data = samp@assays@data$counts, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs)
 } else {
   
-  Idents(dat.seurat) <- dat.seurat$batch
-  k2 <- WhichCells(object = dat.seurat , idents = c(samp.id))
-  dat.seurat.filt <- dat.seurat[,k2]
-  Idents(dat.seurat.filt) <- dat.seurat.filt$batch
-  samp <- as.SingleCellExperiment(dat.seurat.filt, assay = "RNA")
-  #G190_MF_sce <- as.SingleCellExperiment(G190_Aggr_label_MF, assay = "RNA")
-  #ctrlf2raw <- G190_MF_sce[, G190_MF_sce$sample_id == "G190M2"]
-  #cghmraw <- G190_MF_sce[, G190_MF_sce$sample_id == "G190M3"]
-  #ctrlmraw <- G190_MF_sce[, G190_MF_sce$sample_id == "G193M1"]
-  #ctrlfraw <- G190_MF_sce[, G190_MF_sce$sample_id == "G193M3"]
-  #samp <- G190_MF_sce[, G190_MF_sce$sample_id == samp.id]
-  ## obtain all gene names and store in vector
-  genes <-  samp@rowRanges@partitioning@NAMES
+  if (length(samp.id)>1) {
+    Idents(dat.seurat) <- dat.seurat$batch
+    k2 <- WhichCells(object = dat.seurat , idents = c(samp.id))
+    dat.seurat.filt <- dat.seurat[,k2]
+    Idents(dat.seurat.filt) <- dat.seurat.filt$batch
+    
+    rsamp <- map(samp.id, function(ids){
+      filt <- length(SingleCellExperiment::counts(as.SingleCellExperiment(dat.seurat.filt[, WhichCells(object = dat.seurat , idents = ids)], 
+                                                                          assay = "RNA"))@Dimnames[[2]])
+      #print(filt) # For troubleshooting purposes only
+      
+      sce <- SingleCellExperiment::counts(as.SingleCellExperiment(dat.seurat.filt[, WhichCells(object = dat.seurat , idents = ids)], assay = "RNA"))[, sample(1:filt, 3500)]
+    }) %>% reduce(cbind)
+    
+    ## obtain all gene names and store in vector
+    genes <-  rsamp@Dimnames[[1]]
+    
+    ## create lncRNA specific vector
+    lncs <- genes[grep("lnc", genes)]
+    
+    ## check that lncRNAs are in lncs vector
+    print(head(lncs))
+    
+    
+    network1 <- compute.network.sparse(expr.data = rsamp, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed)
+  } else {
+    Idents(dat.seurat) <- dat.seurat$batch
+    k2 <- WhichCells(object = dat.seurat , idents = c(samp.id))
+    dat.seurat.filt <- dat.seurat[,k2]
+    Idents(dat.seurat.filt) <- dat.seurat.filt$batch
+    samp <- as.SingleCellExperiment(dat.seurat.filt, assay = "RNA")
+    
+    ## obtain all gene names and store in vector
+    genes <-  samp@rowRanges@partitioning@NAMES
+    
+    ## create lncRNA specific vector
+    lncs <- genes[grep("lnc", genes)]
+    
+    ## check that lncRNAs are in lncs vector
+    print(head(lncs))
   
-  ## create lncRNA specific vector
-  lncs <- genes[grep("lnc", genes)]
-  
-  ## check that lncRNAs are in lncs vector
-  print(head(lncs))
-  
-  
-  network1 <- compute.network.sparse(expr.data = samp@assays@data$counts, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs)
-}
+    network1 <- compute.network.sparse(expr.data = samp@assays@data$counts, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed)
 
+    }
+}
 
 #model1 <- compute.network.model(expr.data = cbind(ctrlmsce@assays@data$counts,ctrlfsce@assays@data$counts))
 
@@ -138,6 +201,6 @@ if (grepl(",", args[5])) {
 }
 
 
-saveRDS(network1, paste0(out_dir,"/bigscale2_network_nomodel_",quantile.p,"_opt",opt,"_",dattype,"_",samps,"_",run,"_",format(Sys.time(), "%Y_%d_%m_%H_%M_%S"),".RDS"))
+saveRDS(network1, paste0(out_dir,"/bigscale2_network_nomodel_",quantile.p,"_opt",opt,"_",dattype,"_",samps,"_",run,"_",speed,"_",format(Sys.time(), "%Y_%d_%m_%H_%M_%S"),".RDS"))
 
 #saveRDS(res, paste0("bigscale2_res_",Sys.Date(),".RDS"))

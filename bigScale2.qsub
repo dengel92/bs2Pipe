@@ -50,11 +50,37 @@ p4=$4
 p5=$5
 p6=$6
 run=$7
+speed=$8
+output_file=~/Bigscale_pipe/output_paths_$(date +'%m-%d-%Y').txt
+
+# Define the current date in MM-DD-YYYY format
+current_date=$(date +'%m-%d-%Y')
+
+# Find and delete .txt files that begin with "output_paths_" and have a date that doesn't match the current date
+for file in ~/Bigscale_pipe/output_paths_*.txt; do
+  # Extract the date portion from the filename
+  file_date=$(basename "$file" | sed -n 's/^output_paths_\([0-9]\{2\}-[0-9]\{2\}-[0-9]\{4\}\).txt$/\1/p')
+
+  # Check if the date exists and does not match the current date
+  if [[ -n "$file_date" && "$file_date" != "$current_date" ]]; then
+    echo "Deleting outdated file: $file"
+    rm "$file"
+  fi
+done
+
+
+# Create a new output_paths.txt file
+touch "$output_file"
+
+# Define the output directory
 out="/projectnb/wax-dk/david/BS2_$(date +'%m-%d-%Y')"
 
-echo "$out" >> ~/Bigscale_pipe/output_paths.txt
+# Append the output directory path to output_paths.txt
+echo "$out" >> "$output_file"
 
+# Create the output directory
 mkdir -p "$out"
+
 
 if [ $? -eq 0 ]; then
   echo "Folder '$out' created successfully."
@@ -86,7 +112,7 @@ else
   exit 1  # Terminate the script with an error code
 fi
 
-Rscript bs2Pipe.R $p1 $p2 $p3 $p4 $p5 $p6 $out $run
+Rscript Bigscale_pipe_v2.R $p1 $p2 $p3 $p4 $p5 $p6 $out $run $speed
 
 # Wait for both background processes to complete
 

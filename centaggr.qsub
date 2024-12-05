@@ -13,6 +13,6 @@ set -eux
 
 module load R/4.4.0
 
-output="~/Bigscale_pipe/output_paths.txt"
+output="~/Bigscale_pipe/output_paths_$(date +'%m-%d-%Y').txt"
 
 Rscript AggregateCentrality.R $output
