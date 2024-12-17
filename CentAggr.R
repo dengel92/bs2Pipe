@@ -1,7 +1,7 @@
 library(tidyverse)
 
-rdsfilename_to_suffix <- function(pth) {
-  files <- list.files(pth, pattern = "\\.RDS$")
+rdsfilename_to_suffix <- function(pth, runtime) {
+  files <- grep(paste0(runtime,".*\\.RDS"), list.files(pth, full.names = TRUE, recursive = T), value = T)
   print(length(files))
   # Extract the suffixes using str_extract
   suffixes <- sapply(files, function(file) {
@@ -9,7 +9,7 @@ rdsfilename_to_suffix <- function(pth) {
     filename <- basename(file)
     # print(filename)
     # Use str_extract to capture the G190Mx and Run.X parts
-    g190m <- str_extract(filename, "G\\d+M\\d+")  # Extract G190M and the number
+    g190m <- str_extract(filename, "(G\\d+M\\d+)+")  # Extract G190M and the number
     # print(length(g190m))
     # Check if the filename contains "norm" or "raw"
     data_type <- ifelse(str_detect(filename, "norm"), "norm", 
@@ -36,8 +36,8 @@ rdsfilename_to_suffix <- function(pth) {
   return(suffixes)
 }
 
-load_rds_with_suffixes <- function(pth, suffixes) {
-  files <- list.files(pth, pattern = "\\.RDS$", full.names = TRUE)
+load_rds_with_suffixes <- function(pth, runtime, suffixes) {
+  files <- grep(paste0(runtime,".*\\.RDS"), list.files(pth, full.names = TRUE, recursive = T), value = T)
    print(length(files))
   # Check if the number of suffixes matches the number of files
   if (length(files) != length(suffixes)) {
@@ -68,9 +68,9 @@ add_top100_indicators <- function(df, centralities, suffix) {
     select(everything(), ends_with("_rank"), ends_with("_top100"))
 }
 
-CentAggr <- function(pth, suffixes = NULL, centralities = NULL) {
+CentAggr <- function(pth, suffixes = NULL, centralities = NULL, runtime) {
   
-  load_rds_with_suffixes(pth, suffixes)
+  load_rds_with_suffixes(pth, suffixes, runtime)
   # Get the list of objects in the global environment
   all_objects <- ls(.GlobalEnv)[sapply(mget(ls(.GlobalEnv), .GlobalEnv), is.list)]
   
@@ -90,14 +90,16 @@ CentAggr <- function(pth, suffixes = NULL, centralities = NULL) {
   
   #str(dataframes)
   
+  
   #print(head(dataframes))
   # Apply the function to each data frame
   dataframes_with_indicators <- mapply(function(df, suffix) {
     add_top100_indicators(df, centralities, suffix)
   }, dataframes, suffixes, SIMPLIFY = FALSE)
   
+  #str(dataframes_with_indicators)
   
-  combined_df <- reduce(dataframes_with_indicators, function(df1, df2) {
+  combined_df <- purrr::reduce(dataframes_with_indicators, function(df1, df2) {
     full_join(df1, df2, by = "ids")  # You can use other join types like inner_join, full_join, etc.
   }) %>%
     arrange(across(ends_with("_top100"))) %>%
@@ -110,9 +112,22 @@ CentAggr <- function(pth, suffixes = NULL, centralities = NULL) {
   
   # Select columns with non-top100 ones first, then top100 columns
   reordered_combined_df <- combined_df %>%
-    select(all_of(other_columns), all_of(top100_columns))
+    select(all_of(other_columns), all_of(top100_columns))%>%
+    mutate(across(ends_with("_rank"), ~ ifelse(is.na(.) | . == "", 10000, as.numeric(.))))%>%
+    mutate(across(-c(ends_with("_rank"), ids), ~ ifelse(is.na(.) | . == "", 0, as.numeric(.))))
+  
+  
+  
+  sum.stats <- imap_dfr(data_sources,function(X, ids){
+    
+    tmp <- tibble(NetID = str_extract(ids, "(G\\d+M\\d+)+_Run\\.(\\d+|[a-zA-Z]+)"),
+                  quartile.p = str_extract(ids, "\\d+\\.\\d+"),
+                  cutoff.p = X$cutoff.p,
+                  Node.cnt = length(igraph::V(X$graph)),
+                  Clust.cnt = max(X$clusters))
+  })
 
   
-  return(reordered_combined_df)
+  return(list(aggrdf = reordered_combined_df, sum.stats = sum.stats))
 }
 

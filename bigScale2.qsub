@@ -50,30 +50,54 @@ p4=$4
 p5=$5
 p6=$6
 run=$7
-speed=$8
-output_file=~/Bigscale_pipe/output_paths_$(date +'%m-%d-%Y').txt
+
+mainoutputdir="${@: -3:1}"
+echo "$mainoutputdir"
+
+model="${@: -2:1}"
+
+# Get the parameter to check (e.g., the last one)
+
+# Check if it's a valid directory
+if [ -d "$model" ]; then
+    echo "'$model' is a directory."
+
+# Check if it's a valid file
+elif [ -f "$model" ]; then
+    echo "'$model' is a file."
+
+# Handle invalid paths by setting to NA
+else
+    echo "'$model' is not a valid file or directory. Setting it to NA."
+    $model="NA"
+fi
+
+# Continue with script logic
+echo "Parameter value is now: $model"
 
 # Define the current date in MM-DD-YYYY format
-current_date=$(date +'%m-%d-%Y')
+date_run="${@: -1}"
 
-# Find and delete .txt files that begin with "output_paths_" and have a date that doesn't match the current date
-for file in ~/Bigscale_pipe/output_paths_*.txt; do
-  # Extract the date portion from the filename
-  file_date=$(basename "$file" | sed -n 's/^output_paths_\([0-9]\{2\}-[0-9]\{2\}-[0-9]\{4\}\).txt$/\1/p')
+# # Find and delete .txt files that begin with "output_paths_" and have a date that doesn't match the current date
+# for file in ~/Bigscale_pipe/output_paths_*.txt; do
+#   # Extract the date portion from the filename
+#   file_date=$(basename "$file" | sed -n 's/^output_paths_\([0-9]\{2\}-[0-9]\{2\}-[0-9]\{4\}\).txt$/\1/p')
+# 
+#   # Check if the date exists and does not match the current date
+#   if [[ -n "$file_date" && "$file_date" != "$date_run" ]]; then
+#     echo "Deleting outdated file: $file"
+#     rm "$file"
+#   fi
+# done
 
-  # Check if the date exists and does not match the current date
-  if [[ -n "$file_date" && "$file_date" != "$current_date" ]]; then
-    echo "Deleting outdated file: $file"
-    rm "$file"
-  fi
-done
-
+#output_file=~/Bigscale_pipe/output_paths_$date_run.txt
 
 # Create a new output_paths.txt file
-touch "$output_file"
+#touch "$output_file"
 
 # Define the output directory
-out="/projectnb/wax-dk/david/BS2_$(date +'%m-%d-%Y')"
+out="$mainoutputdir/BS2_$date_run"
+echo "$out"
 
 # Append the output directory path to output_paths.txt
 echo "$out" >> "$output_file"
@@ -112,7 +136,7 @@ else
   exit 1  # Terminate the script with an error code
 fi
 
-Rscript Bigscale_pipe_v2.R $p1 $p2 $p3 $p4 $p5 $p6 $out $run $speed
+Rscript Bigscale_pipe_v3.R $p1 $p2 $p3 $p4 $p5 $p6 $out $run $speed $model $date_run
 
 # Wait for both background processes to complete
 

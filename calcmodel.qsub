@@ -13,9 +13,8 @@ set -eux
 
 module load R/4.4.0
 
-runtime=$1
+home=$1
+models=$2
+date=$3
 
-pth=$2
-#output="~/Bigscale_pipe/output_paths_$(date +'%m-%d-%Y').txt"
-
-Rscript AggregateCentrality.R $runtime $pth
+Rscript CalcModel.R $home $models $date

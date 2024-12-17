@@ -1,5 +1,8 @@
 #!/bin/bash -l
 
-qsub centaggr.qsub
+date=$1
+mainoutputdir=$2
+
+qsub centaggr.qsub $date $mainoutputdir
 
 

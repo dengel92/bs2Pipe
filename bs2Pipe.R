@@ -60,12 +60,15 @@ if (length(args) < 8 || is.na(args[8]) || is.na(as.numeric(args[8]))) {
   run <- paste0("Run.", as.numeric(args[8]))
 }
 
-if (args[length(args)] %in% c("normal", "fast")) {
-  speed <- args[length(args)]
+if (args[(length(args)-2)] %in% c("normal", "fast")) {
+  speed <- args[(length(args)-2)]
 } else {
   speed <- "slow"
 }
 
+model.pth <- args[(length(args)-1)]
+
+runtime <- args[length(args)]
 
 print(out_dir)
 print(sprintf('quantile.p: %g',quantile.p)) ###
@@ -115,8 +118,16 @@ if (dattype == "norm") {
     ## check that lncRNAs are in lncs vector
     print(head(lncs))
     
+    ## Load Model:
+    file_path <- list.files(path = model.pth, pattern = paste0("model_norm_", runtime, "\\.RDS"), full.names = TRUE)
+    if (length(file_path) == 1) {
+      model <- readRDS(file_path)
+    } else {
+      print("No file or multiple files found matching the pattern.")
+      model <- NA
+    }
     
-    network1 <- compute.network.sparse(expr.data = rsamp, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed)
+    network1 <- compute.network.sparse(expr.data = rsamp, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed, model = model)
   } else {
     Idents(dat.seurat) <- dat.seurat$batch
     k2 <- WhichCells(object = dat.seurat , idents = c(samp.id))
@@ -133,7 +144,16 @@ if (dattype == "norm") {
     ## check that lncRNAs are in lncs vector
     print(head(lncs))
     
-    network1 <- compute.network.sparse(expr.data = samp@assays@data$counts, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed)
+    ## Load Model:
+    file_path <- list.files(path = model.pth, pattern = paste0("model_norm_", runtime, "\\.RDS"), full.names = TRUE)
+    if (length(file_path) == 1) {
+      model <- readRDS(file_path)
+    } else {
+      print("No file or multiple files found matching the pattern.")
+      model <- NA
+    }
+    
+    network1 <- compute.network.sparse(expr.data = samp@assays@data$counts, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed, model = model)
   }
   
 } else {
@@ -161,8 +181,16 @@ if (dattype == "norm") {
     ## check that lncRNAs are in lncs vector
     print(head(lncs))
     
+    ## Load Model:
+    file_path <- list.files(path = model.pth, pattern = paste0("model_raw_", runtime, "\\.RDS"), full.names = TRUE)
+    if (length(file_path) == 1) {
+      model <- readRDS(file_path)
+    } else {
+      print("No file or multiple files found matching the pattern.")
+      model <- NA
+    }
     
-    network1 <- compute.network.sparse(expr.data = rsamp, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed)
+    network1 <- compute.network.sparse(expr.data = rsamp, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed, model = model)
   } else {
     Idents(dat.seurat) <- dat.seurat$batch
     k2 <- WhichCells(object = dat.seurat , idents = c(samp.id))
@@ -179,6 +207,15 @@ if (dattype == "norm") {
     ## check that lncRNAs are in lncs vector
     print(head(lncs))
   
+    ## Load Model:
+    file_path <- list.files(path = model.pth, pattern = paste0("model_raw_", runtime, "\\.RDS"), full.names = TRUE)
+    if (length(file_path) == 1) {
+      model <- readRDS(file_path)
+    } else {
+      print("No file or multiple files found matching the pattern.")
+      model <- NA
+    }
+    
     network1 <- compute.network.sparse(expr.data = samp@assays@data$counts, quantile.p = quantile.p, gene.names = genes, opt = opt, lncs = lncs, speed.preset=speed)
 
     }
@@ -201,6 +238,6 @@ if (grepl(",", args[5])) {
 }
 
 
-saveRDS(network1, paste0(out_dir,"/bigscale2_network_nomodel_",quantile.p,"_opt",opt,"_",dattype,"_",samps,"_",run,"_",speed,"_",format(Sys.time(), "%Y_%d_%m_%H_%M_%S"),".RDS"))
+saveRDS(network1, paste0(out_dir,"/bigscale2_network_nomodel_",quantile.p,"_opt",opt,"_",dattype,"_",samps,"_",run,"_",speed,"_",runtime,".RDS"))
 
 #saveRDS(res, paste0("bigscale2_res_",Sys.Date(),".RDS"))
