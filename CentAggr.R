@@ -1,7 +1,8 @@
 library(tidyverse)
 
-rdsfilename_to_suffix <- function(pth, runtime) {
-  files <- grep(paste0(runtime,".*\\.RDS"), list.files(pth, full.names = TRUE, recursive = T), value = T)
+rdsfilename_to_suffix <- function(pth, stime) {
+  files <- list.files(pth, full.names = TRUE, pattern = "\\.RDS$", recursive = T) %>% 
+    grep(pattern = stime, . , value = T)
   print(length(files))
   # Extract the suffixes using str_extract
   suffixes <- sapply(files, function(file) {
@@ -36,8 +37,9 @@ rdsfilename_to_suffix <- function(pth, runtime) {
   return(suffixes)
 }
 
-load_rds_with_suffixes <- function(pth, runtime, suffixes) {
-  files <- grep(paste0(runtime,".*\\.RDS"), list.files(pth, full.names = TRUE, recursive = T), value = T)
+load_rds_with_suffixes <- function(pth, stime, suffixes) {
+  files <- list.files(pth, full.names = TRUE, pattern = "\\.RDS$", recursive = T) %>% 
+  grep(pattern = stime, . , value = T)
    print(length(files))
   # Check if the number of suffixes matches the number of files
   if (length(files) != length(suffixes)) {
@@ -70,7 +72,7 @@ add_top100_indicators <- function(df, centralities, suffix) {
 
 CentAggr <- function(pth, suffixes = NULL, centralities = NULL, runtime) {
   
-  load_rds_with_suffixes(pth, suffixes, runtime)
+  load_rds_with_suffixes(pth = pth, stime = runtime, suffixes = suffixes)
   # Get the list of objects in the global environment
   all_objects <- ls(.GlobalEnv)[sapply(mget(ls(.GlobalEnv), .GlobalEnv), is.list)]
   

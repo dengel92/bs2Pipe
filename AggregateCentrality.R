@@ -13,7 +13,11 @@ library(purrr)
 args <- commandArgs(trailingOnly = TRUE)
 
 # Read the paths
-runtime <- args[1]
+stime <- args[1]
+
+print(str(stime))
+
+print(length(stime))
 
 pth <- args[2]
 
@@ -28,13 +32,13 @@ pth <- args[2]
 
 # Your centrality aggregation logic here
 
-print(paste("Processing data in:", paste0("BS2_",runtime)))
-suffixes <- rdsfilename_to_suffix(pth, runtime)
+print(paste("Processing data in:", paste0("BS2_",stime)))
+suffixes <- rdsfilename_to_suffix(pth, stime)
 print(length(suffixes))
 
 centralities <- c("Degree", "Betweenness", "Closeness", "PAGErank")
 
-aggrcent <- CentAggr(pth = pth, suffixes = suffixes, centralities = centralities, runtime)
+aggrcent <- CentAggr(pth = pth, suffixes = suffixes, centralities = centralities, stime)
 
 # str(aggrcent[[1]])
 # head(aggrcent[[1]])
@@ -42,9 +46,15 @@ aggrcent <- CentAggr(pth = pth, suffixes = suffixes, centralities = centralities
 
 qc.plot <- pca.plot(aggrcent[[1]], cent = centralities)
 
+files <- list.files(pth, full.names = TRUE, pattern = "\\.RDS$", recursive = T) %>% 
+  grep(pattern = stime, . , value = T)
+
+subout <- unique(dirname(files))
+
+print(subout)
 
 ## Save each graph takes a separate sheet of a PDF:
-pdf(paste0(common_path, "/bigScale2QC_plots_output.pdf"), width = 15, height = 8.5)
+pdf(paste0(subout, "/bigScale2QC_plots_output.pdf"), width = 15, height = 8.5)
 
 # Filter out NULL values from qc.plot
 filtered_qc_plot <- qc.plot[!sapply(qc.plot, is.null)]
@@ -56,6 +66,6 @@ walk(filtered_qc_plot, ~{
 
 dev.off()
 
-openxlsx::write.xlsx(aggrcent[[1]], paste0(common_path,"/aggrecent","_",format(Sys.time(), "%Y_%d_%m_%H_%M_%S"),".xlsx"))
+openxlsx::write.xlsx(aggrcent[[1]], paste0(subout,"/aggrecent","_",format(Sys.time(), "%Y_%d_%m_%H_%M_%S"),".xlsx"))
 
-openxlsx::write.xlsx(aggrcent[[2]], paste0(common_path,"/Summary_stats","_",format(Sys.time(), "%Y_%d_%m_%H_%M_%S"),".xlsx"))
+openxlsx::write.xlsx(aggrcent[[2]], paste0(subout,"/Summary_stats","_",format(Sys.time(), "%Y_%d_%m_%H_%M_%S"),".xlsx"))
